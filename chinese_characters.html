@@ -7,18 +7,32 @@
     <meta content="width=device-width, initial-scale=1" name="viewport">
     <meta name="referrer" content="origin">
     <title>幼儿识字</title>
-    <script src="https://cdn.staticfile.org/vue/2.4.2/vue.min.js"></script>
+    <script src="https://cdn.staticfile.org/vue/2.6.14/vue.min.js"></script>
     <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        @font-face {
+            font-family: 'KaiTi';
+            src: url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap');
+            font-weight: normal;
+            font-style: normal;
         }
 
         body {
-            font: 15px/1.3 'Open Sans', sans-serif;
+            font-family: 'Open Sans', Arial, sans-serif;
             color: #5e5b64;
             text-align: center;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         a,
@@ -39,17 +53,23 @@
             display: block;
         }
 
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
         nav {
             display: inline-block;
-            margin: 60px auto 45px;
-            background-color: #5597b4;
-            box-shadow: 0 1px 1px #ccc;
-            border-radius: 2px;
+            margin: 30px auto;
+            background-color: #e35885;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
         }
 
         nav a {
             display: inline-block;
-            padding: 18px 30px;
+            padding: 15px 30px;
             color: #fff !important;
             font-weight: bold;
             font-size: 16px;
@@ -57,40 +77,200 @@
             line-height: 1;
             text-transform: uppercase;
             background-color: transparent;
-
-            -webkit-transition: background-color 0.25s;
-            -moz-transition: background-color 0.25s;
             transition: background-color 0.25s;
         }
 
         nav a:first-child {
-            border-radius: 2px 0 0 2px;
+            border-radius: 50px 0 0 50px;
         }
 
         nav a:last-child {
-            border-radius: 0 2px 2px 0;
+            border-radius: 0 50px 50px 0;
         }
 
         nav.previous .previous,
         nav.random .random,
         nav.next .next {
+            background-color: #ed86ea;
+        }
+
+        .word-display {
+            margin: 40px auto;
+            padding: 20px;
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin: 0 auto;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .flashcard-front {
+            background-color: white;
+            color: #e35885;
+        }
+
+        .flashcard-back {
             background-color: #e35885;
+            color: white;
+            transform: rotateY(180deg);
         }
 
-        p {
-            font-size: 22px;
+        .character {
+            font-family: 'KaiTi', 'Noto Serif SC', serif;
+            font-size: 160px;
             font-weight: bold;
-            color: #7d9098;
+            margin-bottom: 20px;
         }
 
-        p b {
-            color: #ffffff;
+        .pinyin {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #888;
+        }
+
+        .meaning {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .example {
+            font-style: italic;
+            font-size: 22px;
+            margin-top: 10px;
+            color: #e6e6e6;
+            font-family: 'KaiTi', 'Noto Serif SC', serif;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background-color: #e35885;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background-color: #ed86ea;
+            transform: scale(1.1);
+        }
+
+        .dictionary-link {
             display: inline-block;
-            padding: 5px 10px;
-            background-color: #ed86eacc;
-            border-radius: 2px;
-            text-transform: uppercase;
-            font-size: 480px;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #e35885;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .dictionary-link:hover {
+            background-color: #ed86ea;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #888;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 600px;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #e35885;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .hint {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Vue transitions */
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s;
+        }
+        .fade-enter, .fade-leave-to {
+            opacity: 0;
+        }
+
+        .slide-enter-active, .slide-leave-active {
+            transition: all 0.5s;
+        }
+        .slide-enter {
+            transform: translateX(100px);
+            opacity: 0;
+        }
+        .slide-leave-to {
+            transform: translateX(-100px);
+            opacity: 0;
+        }
+
+        .keyboard-shortcuts {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .keyboard-shortcut {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 0 2px;
+            font-family: monospace;
         }
     </style>
 
@@ -98,55 +278,347 @@
 
 <body>
 
-<div id="main">
-    <nav v-bind:class="active" v-on:click.prevent>
-        <a class="previous" href="#" v-on:click="previous()">上一个</a>
-        <a class="random" href="#" v-on:click="random()">随机</a>
-        <a class="next" href="#" v-on:click="next()">下一个</a>
-    </nav>
+<div id="main" class="container">
+    <transition name="fade" mode="out-in">
+        <div v-if="isLoading" key="loading" class="loading">
+            <h2>加载中...</h2>
+        </div>
+        <div v-else key="content">
+            <nav v-bind:class="active" v-on:click.prevent>
+                <a class="previous" href="#" v-on:click="previous()">上一个</a>
+                <a class="random" href="#" v-on:click="random()">随机</a>
+                <a class="next" href="#" v-on:click="next()">下一个</a>
+            </nav>
 
-    <p><b>{{active}}</b></p>
+            <div class="word-display">
+                <transition name="slide" mode="out-in">
+                    <div class="flashcard" :class="{ flipped: isFlipped }" 
+                         :key="currentCharacter" 
+                         @click="flipCard">
+                        <div class="flashcard-front">
+                            <div class="character">{{ currentCharacter }}</div>
+                            <div class="pinyin" v-if="currentPinyin">{{ currentPinyin }}</div>
+                            <div class="hint">点击查看详情</div>
+                        </div>
+                        <div class="flashcard-back">
+                            <div class="meaning" v-if="currentMeaning">{{ currentMeaning }}</div>
+                            <div class="example" v-if="currentExample">例句: {{ currentExample }}</div>
+                        </div>
+                    </div>
+                </transition>
+
+                <div class="controls">
+                    <button class="control-btn" @click="previous">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="control-btn" @click="speakCharacter">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                    <button class="control-btn" @click="random">
+                        <i class="fas fa-random"></i>
+                    </button>
+                    <button class="control-btn" @click="next">
+                        <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+
+                <a :href="'https://dict.baidu.com/s?wd=' + currentCharacter" 
+                   target="_blank" 
+                   class="dictionary-link">
+                    在百度汉语中查询
+                </a>
+
+                <div class="progress">
+                    字 {{index + 1}} / {{characterList.length}}
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+                </div>
+
+                <div class="keyboard-shortcuts">
+                    键盘快捷键: 
+                    <span class="keyboard-shortcut">←</span> 上一个 | 
+                    <span class="keyboard-shortcut">→</span> 下一个 | 
+                    <span class="keyboard-shortcut">空格</span> 翻转 | 
+                    <span class="keyboard-shortcut">R</span> 随机 | 
+                    <span class="keyboard-shortcut">S</span> 发音
+                </div>
+            </div>
+        </div>
+    </transition>
 </div>
 
 <script>
-    const demo = new Vue({
+    const app = new Vue({
         el: '#main',
 
         data: {
             index: 0,
-            datalist: [],
-            active: '李'
+            characterList: [],
+            characterMeanings: {
+                "李": "李子，姓氏",
+                "明": "明亮，清楚",
+                "王": "君主，姓氏",
+                "红": "红色",
+                "马": "马，动物",
+                "白": "白色",
+                "水": "水，液体",
+                "天": "天空，日子",
+                "火": "火，火焰",
+                "木": "木头，树",
+                "土": "土壤，土地",
+                "大": "大，巨大",
+                "小": "小，微小",
+                "中": "中间，中国",
+                "人": "人，人类",
+                "心": "心脏，心意",
+                "手": "手，手部",
+                "口": "嘴巴，口子",
+                "耳": "耳朵",
+                "目": "眼睛",
+                "日": "太阳，日子",
+                "月": "月亮，月份",
+                "山": "山，山脉",
+                "石": "石头",
+                "田": "田地，田野",
+                "禾": "禾苗，谷物",
+                "子": "孩子，种子",
+                "女": "女性，女人",
+                "男": "男性，男人",
+                "好": "好，良好",
+                "爱": "爱，喜爱",
+                "家": "家，家庭",
+                "国": "国家",
+                "花": "花，花朵",
+                "草": "草，草地",
+                "虫": "虫子，昆虫",
+                "鱼": "鱼，鱼类",
+                "鸟": "鸟，鸟类",
+                "云": "云，云彩",
+                "雨": "雨，雨水",
+                "风": "风，风气",
+                "雪": "雪，雪花"
+            },
+            characterPinyins: {
+                "李": "lǐ",
+                "明": "míng",
+                "王": "wáng",
+                "红": "hóng",
+                "马": "mǎ",
+                "白": "bái",
+                "水": "shuǐ",
+                "天": "tiān",
+                "火": "huǒ",
+                "木": "mù",
+                "土": "tǔ",
+                "大": "dà",
+                "小": "xiǎo",
+                "中": "zhōng",
+                "人": "rén",
+                "心": "xīn",
+                "手": "shǒu",
+                "口": "kǒu",
+                "耳": "ěr",
+                "目": "mù",
+                "日": "rì",
+                "月": "yuè",
+                "山": "shān",
+                "石": "shí",
+                "田": "tián",
+                "禾": "hé",
+                "子": "zǐ",
+                "女": "nǚ",
+                "男": "nán",
+                "好": "hǎo",
+                "爱": "ài",
+                "家": "jiā",
+                "国": "guó",
+                "花": "huā",
+                "草": "cǎo",
+                "虫": "chóng",
+                "鱼": "yú",
+                "鸟": "niǎo",
+                "云": "yún",
+                "雨": "yǔ",
+                "风": "fēng",
+                "雪": "xuě"
+            },
+            characterExamples: {
+                "李": "李子很甜。",
+                "明": "天气明朗。",
+                "王": "王老师很好。",
+                "红": "红苹果很好吃。",
+                "马": "马儿跑得快。",
+                "白": "雪是白色的。",
+                "水": "喝水对身体好。",
+                "天": "今天天气很好。",
+                "火": "火很热。",
+                "木": "桌子是木头做的。",
+                "土": "花种在土里。",
+                "大": "大象很大。",
+                "小": "小猫很可爱。",
+                "中": "中国很大。",
+                "人": "人们喜欢笑。",
+                "心": "心脏在跳动。",
+                "手": "用手写字。",
+                "口": "张开嘴巴说话。",
+                "耳": "用耳朵听声音。",
+                "目": "用眼睛看书。",
+                "日": "太阳每天升起。",
+                "月": "月亮在夜空中。",
+                "山": "爬山很有趣。",
+                "石": "石头很硬。",
+                "田": "农民在田里种稻子。",
+                "禾": "禾苗长得很好。",
+                "子": "孩子们在玩耍。",
+                "女": "女孩子很漂亮。",
+                "男": "男孩子很调皮。",
+                "好": "今天天气很好。",
+                "爱": "我爱我的家人。",
+                "家": "回家的感觉真好。",
+                "国": "我爱我的国家。",
+                "花": "花园里开满了花。",
+                "草": "草地上很舒服。",
+                "虫": "蚂蚁是一种虫子。",
+                "鱼": "鱼儿在水里游。",
+                "鸟": "鸟儿在天上飞。",
+                "云": "白云在天上飘。",
+                "雨": "下雨了，打伞吧。",
+                "风": "风吹树叶沙沙响。",
+                "雪": "冬天下雪真美。"
+            },
+            currentCharacter: '加载中...',
+            currentMeaning: '',
+            currentPinyin: '',
+            currentExample: '',
+            active: 'next',
+            isLoading: true,
+            isFlipped: false,
+            autoFlipTimer: null
         },
+        
+        computed: {
+            progressPercentage() {
+                return (this.index / (this.characterList.length - 1)) * 100;
+            }
+        },
+        
         created: function () {
-            axios({
-                url: "https://lzc8568.github.io/online-learning/data/chinese_characters.json",
-            }).then(res => {
-                this.datalist = eval(res.data)
-            })
+            this.loadCharacters();
+            
+            // 添加键盘事件监听器
+            window.addEventListener('keydown', this.handleKeyPress);
+        },
+        
+        beforeDestroy() {
+            window.removeEventListener('keydown', this.handleKeyPress);
+            this.clearAutoFlipTimer();
         },
 
         methods: {
+            loadCharacters: function() {
+                this.isLoading = true;
+                axios({
+                    url: "https://lzc8568.github.io/online-learning/data/chinese_characters.json",
+                }).then(response => {
+                    this.characterList = response.data;
+                    
+                    if (this.characterList.length > 0) {
+                        this.isLoading = false;
+                        this.setCurrentCharacter(0);
+                    }
+                }).catch(error => {
+                    console.error("加载汉字数据出错:", error);
+                    this.currentCharacter = "加载出错";
+                    this.isLoading = false;
+                });
+            },
+            
+            setCurrentCharacter(index) {
+                this.index = index;
+                this.currentCharacter = this.characterList[this.index];
+                this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
+                this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
+                this.currentExample = this.characterExamples[this.currentCharacter] || '';
+                this.isFlipped = false;
+                
+                // 设置自动翻转计时器
+                this.setupAutoFlip();
+            },
+            
             previous: function () {
+                this.active = 'previous';
+                this.clearAutoFlipTimer();
                 if (this.index === 0) {
-                    this.index = this.datalist.length - 1
+                    this.index = this.characterList.length - 1;
                 } else {
-                    this.index = this.index - 1
+                    this.index = this.index - 1;
                 }
-                this.active = this.datalist[this.index]
+                this.setCurrentCharacter(this.index);
             },
 
             random: function () {
-                this.index = Math.floor(Math.random() * (this.datalist.length - 1));
-                this.active = this.datalist[this.index]
+                this.active = 'random';
+                this.clearAutoFlipTimer();
+                const newIndex = Math.floor(Math.random() * this.characterList.length);
+                this.setCurrentCharacter(newIndex);
             },
 
             next: function () {
-                if (this.index === this.datalist.length - 1) {
-                    this.index = 0
+                this.active = 'next';
+                this.clearAutoFlipTimer();
+                if (this.index === this.characterList.length - 1) {
+                    this.index = 0;
                 } else {
-                    this.index = this.index + 1
+                    this.index = this.index + 1;
                 }
-                this.active = this.datalist[this.index]
+                this.setCurrentCharacter(this.index);
+            },
+            
+            flipCard: function() {
+                this.isFlipped = !this.isFlipped;
+            },
+            
+            speakCharacter: function() {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(this.currentCharacter);
+                    utterance.lang = 'zh-CN';
+                    window.speechSynthesis.speak(utterance);
+                }
+            },
+            
+            handleKeyPress: function(event) {
+                switch(event.key) {
+                    case 'ArrowLeft':
+                        this.previous();
+                        break;
+                    case 'ArrowRight':
+                        this.next();
+                        break;
+                    case ' ':
+                        this.flipCard();
+                        event.preventDefault(); // 防止页面滚动
+                        break;
+                    case 'r':
+                    case 'R':
+                        this.random();
+                        break;
+                    case 's':
+                    case 'S':
+                        this.speakCharacter();
+                        break;
+                }
+            },
+            
+            setupAutoFlip: function() {
+                this.clearAutoFlipTimer();
+            },
+            
+            clearAutoFlipTimer: function() {
+                if (this.autoFlipTimer) {
+                    clearTimeout(this.autoFlipTimer);
+                    this.autoFlipTimer = null;
+                }
             }
         }
     });
