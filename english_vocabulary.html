@@ -342,6 +342,15 @@
             margin: 0 2px;
             font-family: monospace;
         }
+
+        .vocabulary-source {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f8f8f8;
+            border-radius: 5px;
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 </head>
 
@@ -424,6 +433,14 @@
 
         <div class="settings-panel" :class="{ open: settingsOpen }">
             <div class="settings-title">Settings</div>
+            
+            <div class="settings-option">
+                <label class="settings-label">Vocabulary Source</label>
+                <select v-model="settings.vocabularySource" class="settings-select" @change="changeVocabularySource">
+                    <option value="elementary">Elementary English</option>
+                    <option value="oxford_grade2">Oxford Shenzhen Grade 2</option>
+                </select>
+            </div>
             
             <div class="settings-option">
                 <label class="settings-label">Auto-pronunciation</label>
@@ -572,7 +589,12 @@
                 isLoading: true,
                 isFlipped: false,
                 settingsOpen: false,
+                vocabularySources: {
+                    elementary: "https://lzc8568.github.io/online-learning/data/elementary_english.json",
+                    oxford_grade2: "https://lzc8568.github.io/online-learning/data/oxford_shenzhen_grade2.json"
+                },
                 settings: {
+                    vocabularySource: 'elementary',
                     autoPronounce: 'onNew',
                     flipBehavior: 'manual',
                     speechRate: '1'
@@ -587,19 +609,7 @@
             },
             
             created: function () {
-                axios({
-                    url: "https://lzc8568.github.io/online-learning/data/elementary_english.json",
-                }).then(response => {
-                    this.wordList = response.data;
-                    if (this.wordList.length > 0) {
-                        this.isLoading = false;
-                        this.setCurrentWord(0);
-                    }
-                }).catch(error => {
-                    console.error("Error loading vocabulary data:", error);
-                    this.currentWord = "Error loading words";
-                    this.isLoading = false;
-                });
+                this.loadVocabulary();
                 
                 // Add keyboard event listeners
                 window.addEventListener('keydown', this.handleKeyPress);
@@ -611,6 +621,27 @@
             },
 
             methods: {
+                loadVocabulary: function() {
+                    this.isLoading = true;
+                    axios({
+                        url: this.vocabularySources[this.settings.vocabularySource],
+                    }).then(response => {
+                        this.wordList = response.data;
+                        if (this.wordList.length > 0) {
+                            this.isLoading = false;
+                            this.setCurrentWord(0);
+                        }
+                    }).catch(error => {
+                        console.error("Error loading vocabulary data:", error);
+                        this.currentWord = "Error loading words";
+                        this.isLoading = false;
+                    });
+                },
+                
+                changeVocabularySource: function() {
+                    this.loadVocabulary();
+                },
+                
                 setCurrentWord(index) {
                     this.index = index;
                     this.currentWord = this.wordList[this.index];
