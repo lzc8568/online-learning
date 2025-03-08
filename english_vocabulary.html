@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="IE=edge" http-equiv="X-UA-Compatible">
+    <meta content="width=device-width, initial-scale=1" name="viewport">
+    <title>Elementary English Vocabulary</title>
+    <script src="https://cdn.staticfile.org/vue/2.6.14/vue.min.js"></script>
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Open Sans', Arial, sans-serif;
+            color: #5e5b64;
+            text-align: center;
+            background-color: #f5f5f5;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        a,
+        a:visited {
+            outline: none;
+            color: #389dc1;
+        }
+
+        a:hover {
+            text-decoration: none;
+        }
+
+        section,
+        footer,
+        header,
+        aside,
+        nav {
+            display: block;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        nav {
+            display: inline-block;
+            margin: 30px auto;
+            background-color: #4a89dc;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+        }
+
+        nav a {
+            display: inline-block;
+            padding: 15px 30px;
+            color: #fff !important;
+            font-weight: bold;
+            font-size: 16px;
+            text-decoration: none !important;
+            line-height: 1;
+            text-transform: uppercase;
+            background-color: transparent;
+            transition: background-color 0.25s;
+        }
+
+        nav a:first-child {
+            border-radius: 50px 0 0 50px;
+        }
+
+        nav a:last-child {
+            border-radius: 0 50px 50px 0;
+        }
+
+        nav.previous .previous,
+        nav.random .random,
+        nav.next .next {
+            background-color: #5d9cec;
+        }
+
+        .word-display {
+            margin: 40px auto;
+            padding: 20px;
+            perspective: 1000px;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            height: 300px;
+            margin: 0 auto;
+            cursor: pointer;
+            transform-style: preserve-3d;
+            transition: transform 0.6s;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front, .flashcard-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .flashcard-front {
+            background-color: white;
+            color: #4a89dc;
+        }
+
+        .flashcard-back {
+            background-color: #4a89dc;
+            color: white;
+            transform: rotateY(180deg);
+        }
+
+        .word {
+            font-size: 80px;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-transform: lowercase;
+        }
+
+        .pronunciation {
+            font-size: 18px;
+            margin-bottom: 10px;
+            color: #888;
+        }
+
+        .meaning {
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+
+        .example {
+            font-style: italic;
+            font-size: 18px;
+            margin-top: 10px;
+            color: #e6e6e6;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            margin-top: 30px;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background-color: #4a89dc;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .control-btn:hover {
+            background-color: #5d9cec;
+            transform: scale(1.1);
+        }
+
+        .dictionary-link {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4a89dc;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+
+        .dictionary-link:hover {
+            background-color: #5d9cec;
+        }
+
+        .progress {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #888;
+        }
+
+        .progress-bar {
+            width: 100%;
+            max-width: 600px;
+            height: 10px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+            margin: 10px auto;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background-color: #4a89dc;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .hint {
+            margin-top: 15px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        /* Vue transitions */
+        .fade-enter-active, .fade-leave-active {
+            transition: opacity 0.5s;
+        }
+        .fade-enter, .fade-leave-to {
+            opacity: 0;
+        }
+
+        .slide-enter-active, .slide-leave-active {
+            transition: all 0.5s;
+        }
+        .slide-enter {
+            transform: translateX(100px);
+            opacity: 0;
+        }
+        .slide-leave-to {
+            transform: translateX(-100px);
+            opacity: 0;
+        }
+
+        .bounce-enter-active {
+            animation: bounce-in 0.5s;
+        }
+        @keyframes bounce-in {
+            0% {
+                transform: scale(0);
+            }
+            50% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .settings-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            text-align: left;
+            max-width: 300px;
+            transform: translateX(320px);
+            transition: transform 0.3s ease;
+        }
+
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+
+        .settings-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #4a89dc;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 101;
+            transition: all 0.3s;
+        }
+
+        .settings-toggle:hover {
+            background-color: #5d9cec;
+        }
+
+        .settings-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+
+        .settings-option {
+            margin-bottom: 15px;
+        }
+
+        .settings-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .settings-select {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        .keyboard-shortcuts {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #888;
+        }
+
+        .keyboard-shortcut {
+            display: inline-block;
+            background-color: #f0f0f0;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin: 0 2px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="main" class="container">
+        <transition name="fade" mode="out-in">
+            <div v-if="isLoading" key="loading" class="loading">
+                <h2>Loading vocabulary...</h2>
+            </div>
+            <div v-else key="content">
+                <nav v-bind:class="active" v-on:click.prevent>
+                    <a class="previous" href="#" v-on:click="previous()">Previous</a>
+                    <a class="random" href="#" v-on:click="random()">Random</a>
+                    <a class="next" href="#" v-on:click="next()">Next</a>
+                </nav>
+
+                <div class="word-display">
+                    <transition name="slide" mode="out-in">
+                        <div class="flashcard" :class="{ flipped: isFlipped }" 
+                             :key="currentWord" 
+                             @click="flipCard">
+                            <div class="flashcard-front">
+                                <div class="word">{{ currentWord }}</div>
+                                <div class="pronunciation" v-if="pronunciation">{{ pronunciation }}</div>
+                                <div class="hint">Click to flip</div>
+                            </div>
+                            <div class="flashcard-back">
+                                <div class="meaning">{{ currentMeaning }}</div>
+                                <div class="example" v-if="currentExample">Example: {{ currentExample }}</div>
+                            </div>
+                        </div>
+                    </transition>
+
+                    <div class="controls">
+                        <button class="control-btn" @click="previous">
+                            <i class="fas fa-arrow-left"></i>
+                        </button>
+                        <button class="control-btn" @click="speakWord">
+                            <i class="fas fa-volume-up"></i>
+                        </button>
+                        <button class="control-btn" @click="flipCard">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="control-btn" @click="random">
+                            <i class="fas fa-random"></i>
+                        </button>
+                        <button class="control-btn" @click="next">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+
+                    <a :href="'https://dict.youdao.com/result?word=' + currentWord + '&lang=en'" 
+                       target="_blank" 
+                       class="dictionary-link">
+                        Look up in Youdao Dictionary
+                    </a>
+
+                    <div class="progress">
+                        Word {{index + 1}} of {{wordList.length}}
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" :style="{ width: progressPercentage + '%' }"></div>
+                    </div>
+
+                    <div class="keyboard-shortcuts">
+                        Keyboard shortcuts: 
+                        <span class="keyboard-shortcut">←</span> Previous | 
+                        <span class="keyboard-shortcut">→</span> Next | 
+                        <span class="keyboard-shortcut">Space</span> Flip | 
+                        <span class="keyboard-shortcut">R</span> Random | 
+                        <span class="keyboard-shortcut">S</span> Speak
+                    </div>
+                </div>
+            </div>
+        </transition>
+
+        <button class="settings-toggle" @click="toggleSettings">
+            <i class="fas fa-cog"></i>
+        </button>
+
+        <div class="settings-panel" :class="{ open: settingsOpen }">
+            <div class="settings-title">Settings</div>
+            
+            <div class="settings-option">
+                <label class="settings-label">Auto-pronunciation</label>
+                <select v-model="settings.autoPronounce" class="settings-select">
+                    <option value="off">Off</option>
+                    <option value="onFlip">On card flip</option>
+                    <option value="onNew">On new word</option>
+                </select>
+            </div>
+            
+            <div class="settings-option">
+                <label class="settings-label">Card flip behavior</label>
+                <select v-model="settings.flipBehavior" class="settings-select">
+                    <option value="manual">Manual (click)</option>
+                    <option value="auto">Auto (3 seconds)</option>
+                </select>
+            </div>
+            
+            <div class="settings-option">
+                <label class="settings-label">Speech rate</label>
+                <select v-model="settings.speechRate" class="settings-select">
+                    <option value="0.8">Slow</option>
+                    <option value="1">Normal</option>
+                    <option value="1.2">Fast</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const app = new Vue({
+            el: '#main',
+
+            data: {
+                index: 0,
+                wordList: [],
+                wordMeanings: {
+                    "apple": "A round fruit with red, yellow, or green skin and a white inside.",
+                    "ball": "A round object used in games and sports.",
+                    "cat": "A small furry animal with a tail, often kept as a pet.",
+                    "dog": "A common four-legged animal, often kept as a pet.",
+                    "elephant": "A very large grey animal with a long trunk.",
+                    "fish": "An animal that lives in water and has a tail and fins.",
+                    "goat": "A farm animal with horns and a beard.",
+                    "house": "A building where people live.",
+                    "ice": "Frozen water.",
+                    "jump": "To push yourself suddenly off the ground using your legs.",
+                    "kite": "A toy that flies in the air on the end of a long string.",
+                    "lion": "A large wild cat with a mane.",
+                    "monkey": "An animal with a long tail that lives in trees.",
+                    "nest": "A home built by a bird to lay eggs in.",
+                    "orange": "A round fruit with a thick orange skin.",
+                    "pencil": "A tool used for writing or drawing.",
+                    "queen": "The female ruler of a country.",
+                    "rabbit": "A small animal with long ears and a short tail.",
+                    "sun": "The star that gives light and heat to Earth.",
+                    "tree": "A tall plant with a wooden trunk and branches.",
+                    "umbrella": "An object used to keep you dry in the rain.",
+                    "van": "A covered vehicle used for carrying goods or people.",
+                    "water": "The clear liquid that falls as rain and forms rivers and seas.",
+                    "xylophone": "A musical instrument with wooden bars that you hit.",
+                    "yellow": "The color of lemons or the sun.",
+                    "zebra": "A black and white striped animal like a horse.",
+                    "book": "A set of pages with writing or pictures.",
+                    "car": "A vehicle with four wheels that people drive.",
+                    "desk": "A table used for writing or working at.",
+                    "egg": "An oval object laid by a female bird or reptile.",
+                    "flower": "The colored part of a plant that grows from a stem.",
+                    "garden": "An area of land where plants are grown.",
+                    "hat": "Something you wear on your head.",
+                    "insect": "A small animal with six legs and often wings.",
+                    "jacket": "A short coat.",
+                    "key": "A small piece of metal used to open a lock.",
+                    "lamp": "An object that produces light.",
+                    "moon": "The natural satellite of the Earth.",
+                    "night": "The time when it is dark and people sleep.",
+                    "owl": "A bird with large eyes that hunts at night.",
+                    "pig": "A pink or black farm animal with a curly tail.",
+                    "quilt": "A warm cover for a bed.",
+                    "rain": "Water that falls from clouds in drops.",
+                    "school": "A place where children go to learn.",
+                    "tiger": "A large wild cat with orange and black stripes.",
+                    "up": "Toward a higher place or position.",
+                    "violin": "A musical instrument with strings played with a bow.",
+                    "window": "An opening in a wall or roof with glass.",
+                    "box": "A container with a flat base and sides.",
+                    "year": "A period of 12 months."
+                },
+                wordExamples: {
+                    "apple": "I eat an apple every day.",
+                    "ball": "The children are playing with a ball.",
+                    "cat": "The cat is sleeping on the sofa.",
+                    "dog": "My dog likes to go for walks.",
+                    "elephant": "The elephant has a long trunk.",
+                    "fish": "There are many fish in the sea.",
+                    "goat": "The goat is eating grass.",
+                    "house": "We live in a small house.",
+                    "ice": "The ice is very cold.",
+                    "jump": "Can you jump over the puddle?",
+                    "kite": "We flew a kite at the beach.",
+                    "lion": "The lion is the king of the jungle.",
+                    "monkey": "The monkey is climbing the tree.",
+                    "nest": "The bird built a nest in our tree.",
+                    "orange": "I like to eat an orange after lunch.",
+                    "pencil": "I write with a pencil.",
+                    "queen": "The queen lives in a palace.",
+                    "rabbit": "The rabbit has long ears.",
+                    "sun": "The sun is very bright today.",
+                    "tree": "The tree has green leaves.",
+                    "umbrella": "Take an umbrella, it might rain.",
+                    "van": "The delivery van brought our package.",
+                    "water": "I drink a lot of water every day.",
+                    "xylophone": "She plays the xylophone in the school band.",
+                    "yellow": "The sun is yellow.",
+                    "zebra": "The zebra has black and white stripes.",
+                    "book": "I'm reading an interesting book.",
+                    "car": "My dad drives a blue car.",
+                    "desk": "My homework is on my desk.",
+                    "egg": "I had a boiled egg for breakfast.",
+                    "flower": "The flower smells nice.",
+                    "garden": "We grow vegetables in our garden.",
+                    "hat": "Wear a hat when it's sunny.",
+                    "insect": "A butterfly is a beautiful insect.",
+                    "jacket": "Put on your jacket, it's cold outside.",
+                    "key": "I lost my house key.",
+                    "lamp": "Turn on the lamp, it's getting dark.",
+                    "moon": "The moon shines at night.",
+                    "night": "We sleep at night.",
+                    "owl": "The owl hunts at night.",
+                    "pig": "The pig lives on the farm.",
+                    "quilt": "The quilt keeps me warm in winter.",
+                    "rain": "The rain is falling from the sky.",
+                    "school": "I learn new things at school.",
+                    "tiger": "The tiger is a dangerous animal.",
+                    "up": "Look up at the sky.",
+                    "violin": "She plays the violin beautifully.",
+                    "window": "Open the window to let in fresh air.",
+                    "box": "I put my toys in a box.",
+                    "year": "There are twelve months in a year."
+                },
+                currentWord: 'Loading...',
+                currentMeaning: '',
+                currentExample: '',
+                pronunciation: '',
+                active: 'next',
+                isLoading: true,
+                isFlipped: false,
+                settingsOpen: false,
+                settings: {
+                    autoPronounce: 'onNew',
+                    flipBehavior: 'manual',
+                    speechRate: '1'
+                },
+                autoFlipTimer: null
+            },
+            
+            computed: {
+                progressPercentage() {
+                    return (this.index / (this.wordList.length - 1)) * 100;
+                }
+            },
+            
+            created: function () {
+                axios({
+                    url: "data/elementary_english.json",
+                }).then(response => {
+                    this.wordList = response.data;
+                    if (this.wordList.length > 0) {
+                        this.isLoading = false;
+                        this.setCurrentWord(0);
+                    }
+                }).catch(error => {
+                    console.error("Error loading vocabulary data:", error);
+                    this.currentWord = "Error loading words";
+                    this.isLoading = false;
+                });
+                
+                // Add keyboard event listeners
+                window.addEventListener('keydown', this.handleKeyPress);
+            },
+            
+            beforeDestroy() {
+                window.removeEventListener('keydown', this.handleKeyPress);
+                this.clearAutoFlipTimer();
+            },
+
+            methods: {
+                setCurrentWord(index) {
+                    this.index = index;
+                    this.currentWord = this.wordList[this.index];
+                    this.currentMeaning = this.wordMeanings[this.currentWord] || 'No meaning available';
+                    this.currentExample = this.wordExamples[this.currentWord] || '';
+                    this.isFlipped = false;
+                    
+                    // Auto-pronounce if enabled
+                    if (this.settings.autoPronounce === 'onNew') {
+                        this.speakWord();
+                    }
+                    
+                    // Set up auto-flip if enabled
+                    this.setupAutoFlip();
+                },
+                
+                previous: function () {
+                    this.active = 'previous';
+                    this.clearAutoFlipTimer();
+                    if (this.index === 0) {
+                        this.index = this.wordList.length - 1;
+                    } else {
+                        this.index = this.index - 1;
+                    }
+                    this.setCurrentWord(this.index);
+                },
+
+                random: function () {
+                    this.active = 'random';
+                    this.clearAutoFlipTimer();
+                    const newIndex = Math.floor(Math.random() * this.wordList.length);
+                    this.setCurrentWord(newIndex);
+                },
+
+                next: function () {
+                    this.active = 'next';
+                    this.clearAutoFlipTimer();
+                    if (this.index === this.wordList.length - 1) {
+                        this.index = 0;
+                    } else {
+                        this.index = this.index + 1;
+                    }
+                    this.setCurrentWord(this.index);
+                },
+                
+                flipCard: function() {
+                    this.isFlipped = !this.isFlipped;
+                    
+                    // Auto-pronounce on flip if enabled
+                    if (this.isFlipped && this.settings.autoPronounce === 'onFlip') {
+                        this.speakWord();
+                    }
+                },
+                
+                speakWord: function() {
+                    if ('speechSynthesis' in window) {
+                        const utterance = new SpeechSynthesisUtterance(this.currentWord);
+                        utterance.lang = 'en-US';
+                        utterance.rate = parseFloat(this.settings.speechRate);
+                        window.speechSynthesis.speak(utterance);
+                    }
+                },
+                
+                toggleSettings: function() {
+                    this.settingsOpen = !this.settingsOpen;
+                },
+                
+                handleKeyPress: function(event) {
+                    switch(event.key) {
+                        case 'ArrowLeft':
+                            this.previous();
+                            break;
+                        case 'ArrowRight':
+                            this.next();
+                            break;
+                        case ' ':
+                            this.flipCard();
+                            event.preventDefault(); // Prevent page scroll
+                            break;
+                        case 'r':
+                        case 'R':
+                            this.random();
+                            break;
+                        case 's':
+                        case 'S':
+                            this.speakWord();
+                            break;
+                    }
+                },
+                
+                setupAutoFlip: function() {
+                    this.clearAutoFlipTimer();
+                    if (this.settings.flipBehavior === 'auto') {
+                        this.autoFlipTimer = setTimeout(() => {
+                            this.flipCard();
+                        }, 3000);
+                    }
+                },
+                
+                clearAutoFlipTimer: function() {
+                    if (this.autoFlipTimer) {
+                        clearTimeout(this.autoFlipTimer);
+                        this.autoFlipTimer = null;
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+
+</html> 

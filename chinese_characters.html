@@ -118,7 +118,7 @@
         },
         created: function () {
             axios({
-                url: "https://liz0608.github.io/online-learning/data/1_1.json",
+                url: "data/chinese_characters.json",
             }).then(res => {
                 this.datalist = eval(res.data)
             })
