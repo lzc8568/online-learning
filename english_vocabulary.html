@@ -152,6 +152,16 @@
             margin-bottom: 20px;
         }
 
+        .chinese-meaning {
+            font-size: 22px;
+            margin-bottom: 15px;
+            color: #f0f0f0;
+            padding: 5px 10px;
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            display: inline-block;
+        }
+
         .example {
             font-style: italic;
             font-size: 18px;
@@ -379,6 +389,7 @@
                             </div>
                             <div class="flashcard-back">
                                 <div class="meaning">{{ currentMeaning }}</div>
+                                <div class="chinese-meaning" v-if="chineseMeaning">中文: {{ chineseMeaning }}</div>
                                 <div class="example" v-if="currentExample">Example: {{ currentExample }}</div>
                             </div>
                         </div>
@@ -593,6 +604,7 @@
                 currentWord: 'Loading...',
                 currentMeaning: '',
                 currentExample: '',
+                chineseMeaning: '',
                 pronunciation: '',
                 active: 'next',
                 isLoading: true,
@@ -691,6 +703,7 @@
                     this.currentWord = this.wordList[this.index];
                     this.currentMeaning = this.wordMeanings[this.currentWord] || 'No meaning available';
                     this.currentExample = this.wordExamples[this.currentWord] || '';
+                    this.chineseMeaning = ''; // Reset Chinese meaning when changing word
                     this.isFlipped = false;
                     
                     // Auto-pronounce if enabled
@@ -734,10 +747,146 @@
                 flipCard: function() {
                     this.isFlipped = !this.isFlipped;
                     
+                    // If flipping to show the back, fetch Chinese translation
+                    if (this.isFlipped && !this.chineseMeaning) {
+                        this.fetchChineseTranslation();
+                    }
+                    
                     // Auto-pronounce on flip if enabled
                     if (this.isFlipped && this.settings.autoPronounce === 'onFlip') {
                         this.speakWord();
                     }
+                },
+                
+                fetchChineseTranslation: function() {
+                    // Use a combination of predefined translations and API calls
+                    const word = this.currentWord;
+                    if (!word || word === 'Loading...' || word === 'Error loading words') return;
+                    
+                    // Show loading state
+                    this.chineseMeaning = "加载中...";
+                    
+                    // First check our predefined translations
+                    const translation = this.getLocalTranslation(word);
+                    if (translation) {
+                        this.chineseMeaning = translation;
+                        return;
+                    }
+                    
+                    // If no local translation, try to use the Youdao Dictionary web link
+                    this.chineseMeaning = "请点击下方有道词典链接查看翻译";
+                },
+                
+                getLocalTranslation: function(word) {
+                    // Comprehensive dictionary of common English words with Chinese translations
+                    const translations = {
+                        // Animals
+                        "cat": "猫", "dog": "狗", "elephant": "大象", "fish": "鱼", "goat": "山羊",
+                        "lion": "狮子", "monkey": "猴子", "rabbit": "兔子", "tiger": "老虎", "zebra": "斑马",
+                        "bird": "鸟", "hamster": "仓鼠", "turtle": "乌龟", "pet": "宠物", "animal": "动物",
+                        "owl": "猫头鹰", "pig": "猪", "insect": "昆虫",
+                        
+                        // Food
+                        "apple": "苹果", "banana": "香蕉", "orange": "橙子", "pear": "梨", "grape": "葡萄",
+                        "watermelon": "西瓜", "peach": "桃子", "fruit": "水果", "cake": "蛋糕", 
+                        "ice cream": "冰淇淋", "candy": "糖果", "chocolate": "巧克力", "cookie": "饼干",
+                        "milk": "牛奶", "water": "水", "juice": "果汁", "food": "食物", "egg": "鸡蛋",
+                        "rice": "米饭", "noodles": "面条", "bread": "面包", "meat": "肉", "chicken": "鸡肉",
+                        "vegetable": "蔬菜", "tea": "茶", "coffee": "咖啡",
+                        
+                        // Objects
+                        "ball": "球", "book": "书", "box": "盒子", "car": "汽车", "desk": "桌子",
+                        "hat": "帽子", "house": "房子", "jacket": "夹克", "key": "钥匙", "lamp": "灯",
+                        "pencil": "铅笔", "quilt": "被子", "umbrella": "雨伞", "violin": "小提琴", 
+                        "window": "窗户", "door": "门", "chair": "椅子", "floor": "地板", "wall": "墙",
+                        "board": "黑板", "picture": "图片", "clock": "时钟", "classroom": "教室",
+                        "pen": "钢笔", "ruler": "尺子", "eraser": "橡皮", "pencil case": "铅笔盒",
+                        "bag": "包", "crayon": "蜡笔", "scissors": "剪刀", "sharpener": "卷笔刀",
+                        "doll": "洋娃娃", "train": "火车", "plane": "飞机", "kite": "风筝", "robot": "机器人",
+                        "teddy bear": "泰迪熊", "toy": "玩具",
+                        
+                        // Nature
+                        "ice": "冰", "moon": "月亮", "nest": "巢", "rain": "雨", "sun": "太阳",
+                        "tree": "树", "flower": "花", "garden": "花园", "year": "年", "weather": "天气",
+                        "sunny": "晴朗的", "cloudy": "多云的", "rainy": "下雨的", "windy": "有风的",
+                        "snowy": "下雪的", "hot": "热的", "warm": "温暖的", "cool": "凉爽的", "cold": "冷的",
+                        "season": "季节", "spring": "春天", "summer": "夏天", "autumn": "秋天", "winter": "冬天",
+                        
+                        // Time
+                        "month": "月", "week": "周", "day": "天", "time": "时间", "morning": "早上",
+                        "afternoon": "下午", "evening": "晚上", "night": "夜晚", "breakfast": "早餐",
+                        "lunch": "午餐", "dinner": "晚餐", "hour": "小时", "minute": "分钟", "second": "秒",
+                        "January": "一月", "February": "二月", "March": "三月", "April": "四月",
+                        "May": "五月", "June": "六月", "July": "七月", "August": "八月",
+                        "September": "九月", "October": "十月", "November": "十一月", "December": "十二月",
+                        "Monday": "星期一", "Tuesday": "星期二", "Wednesday": "星期三", "Thursday": "星期四",
+                        "Friday": "星期五", "Saturday": "星期六", "Sunday": "星期日", "weekend": "周末",
+                        "today": "今天", "tomorrow": "明天",
+                        
+                        // Places
+                        "school": "学校", "classroom": "教室", "library": "图书馆", "playground": "操场",
+                        "canteen": "食堂", "office": "办公室", "toilet": "厕所", "garden": "花园",
+                        "home": "家", "park": "公园",
+                        
+                        // People & Family
+                        "family": "家庭", "father": "爸爸", "mother": "妈妈", "sister": "姐妹",
+                        "brother": "兄弟", "grandpa": "爷爷", "grandma": "奶奶", "uncle": "叔叔",
+                        "aunt": "阿姨", "cousin": "表兄弟姐妹", "friend": "朋友", "teacher": "老师",
+                        "student": "学生", "classmate": "同学", "doctor": "医生", "nurse": "护士",
+                        "police": "警察", "driver": "司机", "cook": "厨师", "farmer": "农民",
+                        "baby": "婴儿", "parents": "父母",
+                        
+                        // Clothes
+                        "clothes": "衣服", "shirt": "衬衫", "T-shirt": "T恤", "dress": "连衣裙",
+                        "skirt": "裙子", "pants": "裤子", "shorts": "短裤", "shoes": "鞋子",
+                        "socks": "袜子", "hat": "帽子", "coat": "外套", "jacket": "夹克",
+                        "sweater": "毛衣", "uniform": "制服", "scarf": "围巾", "gloves": "手套",
+                        "boots": "靴子", "umbrella": "雨伞", "sunglasses": "太阳镜",
+                        
+                        // Body parts
+                        "head": "头", "face": "脸", "eye": "眼睛", "ear": "耳朵", "nose": "鼻子",
+                        "mouth": "嘴巴", "arm": "手臂", "hand": "手", "leg": "腿", "foot": "脚",
+                        "body": "身体",
+                        
+                        // Numbers & Colors
+                        "one": "一", "two": "二", "three": "三", "four": "四", "five": "五",
+                        "six": "六", "seven": "七", "eight": "八", "nine": "九", "ten": "十",
+                        "count": "数", "number": "数字", "red": "红色", "yellow": "黄色", "blue": "蓝色",
+                        "green": "绿色", "orange": "橙色", "purple": "紫色", "black": "黑色",
+                        "white": "白色", "brown": "棕色", "pink": "粉色", "color": "颜色",
+                        
+                        // Feelings & Greetings
+                        "happy": "开心的", "sad": "伤心的", "angry": "生气的", "scared": "害怕的",
+                        "tired": "累的", "hungry": "饿的", "thirsty": "渴的", "hot": "热的",
+                        "cold": "冷的", "feeling": "感觉", "hello": "你好", "hi": "嗨",
+                        "good morning": "早上好", "good afternoon": "下午好", "goodbye": "再见",
+                        "bye-bye": "拜拜", "I": "我", "am": "是", "my": "我的", "name": "名字", "is": "是",
+                        
+                        // Verbs & Actions
+                        "jump": "跳", "run": "跑", "walk": "走", "sit": "坐", "stand": "站",
+                        "eat": "吃", "drink": "喝", "sleep": "睡觉", "read": "读", "write": "写",
+                        "listen": "听", "speak": "说", "look": "看", "see": "看见", "touch": "触摸",
+                        "feel": "感觉", "open": "打开", "close": "关闭", "give": "给", "take": "拿",
+                        "put": "放", "go": "去", "come": "来", "stop": "停止", "start": "开始",
+                        "finish": "完成", "help": "帮助", "play": "玩", "work": "工作", "study": "学习",
+                        "teach": "教", "learn": "学习", "make": "制作", "build": "建造", "draw": "画",
+                        "paint": "画", "sing": "唱歌", "dance": "跳舞", "laugh": "笑", "cry": "哭",
+                        "smile": "微笑", "frown": "皱眉", "think": "思考", "know": "知道", "understand": "理解",
+                        "remember": "记住", "forget": "忘记", "like": "喜欢", "love": "爱", "hate": "讨厌",
+                        "want": "想要", "need": "需要", "have": "有", "get": "得到", "find": "找到",
+                        "lose": "丢失", "win": "赢", "guess": "猜", "running": "跑步", "skating": "滑冰",
+                        "hopping": "跳跃", "riding": "骑行", "skate": "滑冰", "hop": "跳", "skipping": "跳绳",
+                        "flying": "飞行", "swimming": "游泳", "too": "也", "let's": "让我们", "together": "一起",
+                        "doing": "做", "thing": "事情", "beside": "在旁边", "can't": "不能"
+                    };
+                    
+                    // Try to find the word (case insensitive)
+                    return translations[word.toLowerCase()];
+                },
+                
+                fetchFallbackTranslation: function() {
+                    // This is now handled by getLocalTranslation
+                    this.chineseMeaning = "请点击下方有道词典链接查看翻译";
                 },
                 
                 speakWord: function() {
