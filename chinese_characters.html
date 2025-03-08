@@ -238,6 +238,13 @@
             color: #888;
         }
 
+        .loading-indicator {
+            display: inline-block;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #888;
+        }
+
         /* Vue transitions */
         .fade-enter-active, .fade-leave-active {
             transition: opacity 0.5s;
@@ -272,6 +279,64 @@
             margin: 0 2px;
             font-family: monospace;
         }
+
+        .api-toggle {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+            margin: 0 10px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #e35885;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+
+        .toggle-label {
+            font-size: 14px;
+            color: #666;
+        }
     </style>
 
 </head>
@@ -290,6 +355,15 @@
                 <a class="next" href="#" v-on:click="next()">下一个</a>
             </nav>
 
+            <div class="api-toggle">
+                <span class="toggle-label">本地数据</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" v-model="useApi">
+                    <span class="slider"></span>
+                </label>
+                <span class="toggle-label">在线查询</span>
+            </div>
+
             <div class="word-display">
                 <transition name="slide" mode="out-in">
                     <div class="flashcard" :class="{ flipped: isFlipped }" 
@@ -299,6 +373,9 @@
                             <div class="character">{{ currentCharacter }}</div>
                             <div class="pinyin" v-if="currentPinyin">{{ currentPinyin }}</div>
                             <div class="hint">点击查看详情</div>
+                            <div v-if="isLoadingData" class="loading-indicator">
+                                <i class="fas fa-spinner fa-spin"></i> 加载中...
+                            </div>
                         </div>
                         <div class="flashcard-back">
                             <div class="meaning" v-if="currentMeaning">{{ currentMeaning }}</div>
@@ -494,7 +571,9 @@
             active: 'next',
             isLoading: true,
             isFlipped: false,
-            autoFlipTimer: null
+            autoFlipTimer: null,
+            useApi: false,
+            isLoadingData: false
         },
         
         computed: {
@@ -537,13 +616,94 @@
             setCurrentCharacter(index) {
                 this.index = index;
                 this.currentCharacter = this.characterList[this.index];
-                this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
-                this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
-                this.currentExample = this.characterExamples[this.currentCharacter] || '';
+                
+                if (this.useApi) {
+                    this.fetchCharacterData();
+                } else {
+                    this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
+                    this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
+                    this.currentExample = this.characterExamples[this.currentCharacter] || '';
+                }
+                
                 this.isFlipped = false;
                 
                 // 设置自动翻转计时器
                 this.setupAutoFlip();
+            },
+            
+            fetchCharacterData: function() {
+                if (!this.currentCharacter || this.currentCharacter === '加载中...' || this.currentCharacter === '加载出错') {
+                    return;
+                }
+                
+                this.isLoadingData = true;
+                this.currentPinyin = '加载中...';
+                this.currentMeaning = '加载中...';
+                this.currentExample = '';
+                
+                // 使用公共API代理服务获取百度汉语数据
+                // 提供多个代理服务选项，如果一个失败可以尝试另一个
+                const proxyServices = [
+                    'https://api.allorigins.win/raw?url=',
+                    'https://cors-anywhere.herokuapp.com/',
+                    'https://cors.bridged.cc/'
+                ];
+                
+                const targetUrl = `https://dict.baidu.com/s?wd=${this.currentCharacter}`;
+                const encodedUrl = encodeURIComponent(targetUrl);
+                
+                // 尝试第一个代理服务
+                this.tryProxyService(0, proxyServices, encodedUrl, targetUrl);
+            },
+            
+            tryProxyService: function(index, proxyServices, encodedUrl, originalUrl) {
+                if (index >= proxyServices.length) {
+                    console.error('所有代理服务都失败了');
+                    // 回退到本地数据
+                    this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
+                    this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
+                    this.currentExample = this.characterExamples[this.currentCharacter] || '';
+                    this.isLoadingData = false;
+                    return;
+                }
+                
+                const proxyUrl = proxyServices[index];
+                const url = index === 0 ? proxyUrl + encodedUrl : proxyUrl + originalUrl;
+                
+                axios.get(url)
+                    .then(response => {
+                        const html = response.data;
+                        // 使用正则表达式提取拼音
+                        const pinyinMatch = html.match(/<span class="pinyin">([^<]+)<\/span>/);
+                        const pinyin = pinyinMatch ? pinyinMatch[1].trim() : '';
+                        
+                        // 提取基本释义
+                        let meaning = '';
+                        const basicMeaningsMatch = html.match(/<div class="basic-meanings">[\s\S]*?<\/div>/);
+                        if (basicMeaningsMatch) {
+                            const meaningsMatches = basicMeaningsMatch[0].match(/<p>([^<]+)<\/p>/g);
+                            if (meaningsMatches) {
+                                meaning = meaningsMatches.map(m => m.replace(/<\/?p>/g, '').trim()).join('；');
+                            }
+                        }
+                        
+                        // 提取例句
+                        let example = '';
+                        const exampleMatch = html.match(/<p class="example">([^<]+)<\/p>/);
+                        if (exampleMatch) {
+                            example = exampleMatch[1].trim();
+                        }
+                        
+                        this.currentPinyin = pinyin || this.characterPinyins[this.currentCharacter] || '';
+                        this.currentMeaning = meaning || this.characterMeanings[this.currentCharacter] || '暂无释义';
+                        this.currentExample = example || this.characterExamples[this.currentCharacter] || '';
+                        this.isLoadingData = false;
+                    })
+                    .catch(error => {
+                        console.error(`代理服务 ${proxyUrl} 失败:`, error);
+                        // 尝试下一个代理服务
+                        this.tryProxyService(index + 1, proxyServices, encodedUrl, originalUrl);
+                    });
             },
             
             previous: function () {
@@ -618,6 +778,19 @@
                 if (this.autoFlipTimer) {
                     clearTimeout(this.autoFlipTimer);
                     this.autoFlipTimer = null;
+                }
+            }
+        },
+        
+        watch: {
+            useApi: function(newVal) {
+                if (newVal && this.currentCharacter) {
+                    this.fetchCharacterData();
+                } else {
+                    // 切换回本地数据
+                    this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
+                    this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
+                    this.currentExample = this.characterExamples[this.currentCharacter] || '';
                 }
             }
         }
