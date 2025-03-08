@@ -573,7 +573,13 @@
             isFlipped: false,
             autoFlipTimer: null,
             useApi: false,
-            isLoadingData: false
+            isLoadingData: false,
+            proxyServices: [
+                'https://corsproxy.io/?',
+                'https://api.allorigins.win/raw?url=',
+                'https://cors-anywhere.herokuapp.com/'
+            ],
+            currentProxyIndex: 0
         },
         
         computed: {
@@ -641,69 +647,107 @@
                 this.currentMeaning = '加载中...';
                 this.currentExample = '';
                 
-                // 使用公共API代理服务获取百度汉语数据
-                // 提供多个代理服务选项，如果一个失败可以尝试另一个
-                const proxyServices = [
-                    'https://api.allorigins.win/raw?url=',
-                    'https://cors-anywhere.herokuapp.com/',
-                    'https://cors.bridged.cc/'
-                ];
+                const targetUrl = `https://dict.baidu.com/s?wd=${encodeURIComponent(this.currentCharacter)}`;
+                const proxyUrl = this.proxyServices[this.currentProxyIndex];
+                const url = proxyUrl + encodeURIComponent(targetUrl);
                 
-                const targetUrl = `https://dict.baidu.com/s?wd=${this.currentCharacter}`;
-                const encodedUrl = encodeURIComponent(targetUrl);
-                
-                // 尝试第一个代理服务
-                this.tryProxyService(0, proxyServices, encodedUrl, targetUrl);
-            },
-            
-            tryProxyService: function(index, proxyServices, encodedUrl, originalUrl) {
-                if (index >= proxyServices.length) {
-                    console.error('所有代理服务都失败了');
-                    // 回退到本地数据
-                    this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
-                    this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
-                    this.currentExample = this.characterExamples[this.currentCharacter] || '';
-                    this.isLoadingData = false;
-                    return;
-                }
-                
-                const proxyUrl = proxyServices[index];
-                const url = index === 0 ? proxyUrl + encodedUrl : proxyUrl + originalUrl;
-                
-                axios.get(url)
-                    .then(response => {
+                axios.get(url, {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                })
+                .then(response => {
+                    try {
                         const html = response.data;
-                        // 使用正则表达式提取拼音
-                        const pinyinMatch = html.match(/<span class="pinyin">([^<]+)<\/span>/);
-                        const pinyin = pinyinMatch ? pinyinMatch[1].trim() : '';
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        
+                        // 提取拼音
+                        const pinyinElement = doc.querySelector('.pronounce .pinyin');
+                        const pinyin = pinyinElement ? pinyinElement.textContent.trim() : '';
                         
                         // 提取基本释义
                         let meaning = '';
-                        const basicMeaningsMatch = html.match(/<div class="basic-meanings">[\s\S]*?<\/div>/);
-                        if (basicMeaningsMatch) {
-                            const meaningsMatches = basicMeaningsMatch[0].match(/<p>([^<]+)<\/p>/g);
-                            if (meaningsMatches) {
-                                meaning = meaningsMatches.map(m => m.replace(/<\/?p>/g, '').trim()).join('；');
+                        const basicMeaningsElements = doc.querySelectorAll('.basic-meanings p');
+                        if (basicMeaningsElements.length > 0) {
+                            meaning = Array.from(basicMeaningsElements)
+                                .map(el => el.textContent.trim())
+                                .join('；');
+                        }
+                        
+                        // 如果没有基本释义，尝试获取详细释义
+                        if (!meaning) {
+                            const detailedMeaningsElements = doc.querySelectorAll('.detailed-meanings li');
+                            if (detailedMeaningsElements.length > 0) {
+                                meaning = Array.from(detailedMeaningsElements)
+                                    .map(el => el.textContent.trim())
+                                    .join('；');
                             }
                         }
                         
                         // 提取例句
                         let example = '';
-                        const exampleMatch = html.match(/<p class="example">([^<]+)<\/p>/);
-                        if (exampleMatch) {
-                            example = exampleMatch[1].trim();
+                        const exampleElement = doc.querySelector('.liju-list .example');
+                        if (exampleElement) {
+                            example = exampleElement.textContent.trim();
                         }
                         
+                        // 如果使用DOMParser提取失败，尝试使用正则表达式
+                        if (!pinyin && !meaning) {
+                            // 提取拼音
+                            const pinyinMatch = html.match(/<span class="pinyin">([^<]+)<\/span>/);
+                            if (pinyinMatch) {
+                                pinyin = pinyinMatch[1].trim();
+                            }
+                            
+                            // 提取基本释义
+                            const basicMeaningsMatch = html.match(/<div class="basic-meanings">([\s\S]*?)<\/div>/);
+                            if (basicMeaningsMatch) {
+                                const meaningsMatches = basicMeaningsMatch[1].match(/<p>([^<]+)<\/p>/g);
+                                if (meaningsMatches) {
+                                    meaning = meaningsMatches
+                                        .map(m => m.replace(/<\/?p>/g, '').trim())
+                                        .join('；');
+                                }
+                            }
+                            
+                            // 提取例句
+                            const exampleMatch = html.match(/<p class="example">([^<]+)<\/p>/);
+                            if (exampleMatch) {
+                                example = exampleMatch[1].trim();
+                            }
+                        }
+                        
+                        // 更新数据
                         this.currentPinyin = pinyin || this.characterPinyins[this.currentCharacter] || '';
                         this.currentMeaning = meaning || this.characterMeanings[this.currentCharacter] || '暂无释义';
                         this.currentExample = example || this.characterExamples[this.currentCharacter] || '';
                         this.isLoadingData = false;
-                    })
-                    .catch(error => {
-                        console.error(`代理服务 ${proxyUrl} 失败:`, error);
-                        // 尝试下一个代理服务
-                        this.tryProxyService(index + 1, proxyServices, encodedUrl, originalUrl);
-                    });
+                    } catch (error) {
+                        console.error('解析HTML出错:', error);
+                        this.tryNextProxy(targetUrl);
+                    }
+                })
+                .catch(error => {
+                    console.error('获取数据失败:', error);
+                    this.tryNextProxy(targetUrl);
+                });
+            },
+            
+            tryNextProxy: function(targetUrl) {
+                this.currentProxyIndex = (this.currentProxyIndex + 1) % this.proxyServices.length;
+                
+                // 如果已经尝试了所有代理服务，则回退到本地数据
+                if (this.currentProxyIndex === 0) {
+                    console.log('所有代理服务都失败了，使用本地数据');
+                    this.currentPinyin = this.characterPinyins[this.currentCharacter] || '';
+                    this.currentMeaning = this.characterMeanings[this.currentCharacter] || '暂无释义';
+                    this.currentExample = this.characterExamples[this.currentCharacter] || '';
+                    this.isLoadingData = false;
+                } else {
+                    console.log(`尝试下一个代理服务: ${this.proxyServices[this.currentProxyIndex]}`);
+                    this.fetchCharacterData();
+                }
             },
             
             previous: function () {
