@@ -388,8 +388,7 @@
                                 <div class="hint">Click to flip</div>
                             </div>
                             <div class="flashcard-back">
-                                <div class="meaning">{{ currentMeaning }}</div>
-                                <div class="chinese-meaning" v-if="chineseMeaning">中文: {{ chineseMeaning }}</div>
+                                <div class="chinese-meaning" v-if="chineseMeaning">{{ chineseMeaning }}</div>
                                 <div class="example" v-if="currentExample">Example: {{ currentExample }}</div>
                             </div>
                         </div>
@@ -401,9 +400,6 @@
                         </button>
                         <button class="control-btn" @click="speakWord">
                             <i class="fas fa-volume-up"></i>
-                        </button>
-                        <button class="control-btn" @click="flipCard">
-                            <i class="fas fa-sync-alt"></i>
                         </button>
                         <button class="control-btn" @click="random">
                             <i class="fas fa-random"></i>
