@@ -587,7 +587,7 @@
             
             created: function () {
                 axios({
-                    url: "data/elementary_english.json",
+                    url: "https://lzc8568.github.io/online-learning/data/elementary_english.json",
                 }).then(response => {
                     this.wordList = response.data;
                     if (this.wordList.length > 0) {
