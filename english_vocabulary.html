@@ -438,7 +438,16 @@
                 <label class="settings-label">Vocabulary Source</label>
                 <select v-model="settings.vocabularySource" class="settings-select" @change="changeVocabularySource">
                     <option value="elementary">Elementary English</option>
-                    <option value="oxford_grade2">Oxford Shenzhen Grade 2</option>
+                    <option value="oxford_grade2_term1">Oxford Shenzhen Grade 2 (Term 1)</option>
+                    <option value="oxford_grade2_term2">Oxford Shenzhen Grade 2 (Term 2)</option>
+                </select>
+            </div>
+            
+            <div class="settings-option" v-if="settings.vocabularySource === 'oxford_grade2_term1' || settings.vocabularySource === 'oxford_grade2_term2'">
+                <label class="settings-label">Unit</label>
+                <select v-model="settings.unit" class="settings-select" @change="changeUnit">
+                    <option value="all">All Units</option>
+                    <option v-for="unit in availableUnits" :value="unit">Unit {{ unit.replace('unit', '') }}</option>
                 </select>
             </div>
             
@@ -591,14 +600,17 @@
                 settingsOpen: false,
                 vocabularySources: {
                     elementary: "https://lzc8568.github.io/online-learning/data/elementary_english.json",
-                    oxford_grade2: "https://lzc8568.github.io/online-learning/data/oxford_shenzhen_grade2.json"
+                    oxford_grade2_term1: "https://lzc8568.github.io/online-learning/data/oxford_shenzhen_grade2_term1.json",
+                    oxford_grade2_term2: "https://lzc8568.github.io/online-learning/data/oxford_shenzhen_grade2.json"
                 },
                 settings: {
                     vocabularySource: 'elementary',
+                    unit: 'all',
                     autoPronounce: 'onNew',
                     flipBehavior: 'manual',
                     speechRate: '1'
                 },
+                availableUnits: [],
                 autoFlipTimer: null
             },
             
@@ -626,7 +638,34 @@
                     axios({
                         url: this.vocabularySources[this.settings.vocabularySource],
                     }).then(response => {
-                        this.wordList = response.data;
+                        const data = response.data;
+                        
+                        // Check if data is an object with units or a simple array
+                        if (typeof data === 'object' && !Array.isArray(data)) {
+                            // It's a unit-based vocabulary
+                            this.availableUnits = Object.keys(data);
+                            
+                            if (this.settings.unit === 'all') {
+                                // Combine all units into one list
+                                this.wordList = [];
+                                for (const unit in data) {
+                                    this.wordList = this.wordList.concat(data[unit]);
+                                }
+                            } else if (data[this.settings.unit]) {
+                                // Use only the selected unit
+                                this.wordList = data[this.settings.unit];
+                            } else {
+                                // If the selected unit doesn't exist, default to the first unit
+                                const firstUnit = this.availableUnits[0];
+                                this.settings.unit = firstUnit;
+                                this.wordList = data[firstUnit];
+                            }
+                        } else {
+                            // It's a simple array of words
+                            this.availableUnits = [];
+                            this.wordList = data;
+                        }
+                        
                         if (this.wordList.length > 0) {
                             this.isLoading = false;
                             this.setCurrentWord(0);
@@ -639,6 +678,11 @@
                 },
                 
                 changeVocabularySource: function() {
+                    this.settings.unit = 'all';
+                    this.loadVocabulary();
+                },
+                
+                changeUnit: function() {
                     this.loadVocabulary();
                 },
                 

@@ -1,83 +1,38 @@
-[
-  "family",
-  "father",
-  "mother",
-  "sister",
-  "brother",
-  "grandpa",
-  "grandma",
-  "uncle",
-  "aunt",
-  "cousin",
-  "friend",
-  "teacher",
-  "student",
-  "classmate",
-  "doctor",
-  "nurse",
-  "police",
-  "driver",
-  "cook",
-  "farmer",
-  "clothes",
-  "shirt",
-  "T-shirt",
-  "dress",
-  "skirt",
-  "pants",
-  "shorts",
-  "shoes",
-  "socks",
-  "hat",
-  "coat",
-  "jacket",
-  "sweater",
-  "uniform",
-  "food",
-  "rice",
-  "noodles",
-  "bread",
-  "egg",
-  "meat",
-  "chicken",
-  "fish",
-  "vegetable",
-  "fruit",
-  "apple",
-  "banana",
-  "orange",
-  "grape",
-  "watermelon",
-  "milk",
-  "water",
-  "juice",
-  "tea",
-  "weather",
-  "sunny",
-  "cloudy",
-  "rainy",
-  "windy",
-  "snowy",
-  "hot",
-  "warm",
-  "cool",
-  "cold",
-  "season",
-  "spring",
-  "summer",
-  "autumn",
-  "winter",
-  "month",
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December"
-] 
+{
+  "unit1": [
+    "family", "father", "mother", "sister", "brother", "grandpa", "grandma", "uncle", "aunt", "cousin"
+  ],
+  "unit2": [
+    "friend", "teacher", "student", "classmate", "doctor", "nurse", "police", "driver", "cook", "farmer"
+  ],
+  "unit3": [
+    "clothes", "shirt", "T-shirt", "dress", "skirt", "pants", "shorts", "shoes", "socks", "hat"
+  ],
+  "unit4": [
+    "coat", "jacket", "sweater", "uniform", "scarf", "gloves", "boots", "umbrella", "sunglasses"
+  ],
+  "unit5": [
+    "food", "rice", "noodles", "bread", "egg", "meat", "chicken", "fish", "vegetable", "fruit"
+  ],
+  "unit6": [
+    "apple", "banana", "orange", "grape", "watermelon", "milk", "water", "juice", "tea", "coffee"
+  ],
+  "unit7": [
+    "weather", "sunny", "cloudy", "rainy", "windy", "snowy", "hot", "warm", "cool", "cold"
+  ],
+  "unit8": [
+    "season", "spring", "summer", "autumn", "winter", "year", "month", "week", "day", "time"
+  ],
+  "unit9": [
+    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
+  ],
+  "unit10": [
+    "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday", "weekend", "today", "tomorrow"
+  ],
+  "unit11": [
+    "morning", "afternoon", "evening", "night", "breakfast", "lunch", "dinner", "hour", "minute", "second"
+  ],
+  "unit12": [
+    "school", "classroom", "library", "playground", "canteen", "office", "toilet", "garden", "home", "park"
+  ]
+} 

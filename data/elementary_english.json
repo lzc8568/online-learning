@@ -1,52 +1,23 @@
-[
-  "apple",
-  "ball",
-  "cat",
-  "dog",
-  "elephant",
-  "fish",
-  "goat",
-  "house",
-  "ice",
-  "jump",
-  "kite",
-  "lion",
-  "monkey",
-  "nest",
-  "orange",
-  "pencil",
-  "queen",
-  "rabbit",
-  "sun",
-  "tree",
-  "umbrella",
-  "van",
-  "water",
-  "xylophone",
-  "yellow",
-  "zebra",
-  "book",
-  "car",
-  "desk",
-  "egg",
-  "flower",
-  "garden",
-  "hat",
-  "insect",
-  "jacket",
-  "key",
-  "lamp",
-  "moon",
-  "night",
-  "owl",
-  "pig",
-  "quilt",
-  "rain",
-  "school",
-  "tiger",
-  "up",
-  "violin",
-  "window",
-  "box",
-  "year"
-] 
+{
+  "animals": [
+    "cat", "dog", "elephant", "fish", "goat", "lion", "monkey", "owl", "pig", "rabbit", "tiger", "zebra"
+  ],
+  "food": [
+    "apple", "banana", "egg", "orange", "water"
+  ],
+  "objects": [
+    "ball", "book", "box", "car", "desk", "hat", "house", "jacket", "key", "lamp", "pencil", "quilt", "umbrella", "violin", "window"
+  ],
+  "nature": [
+    "flower", "garden", "ice", "moon", "nest", "rain", "sun", "tree", "year"
+  ],
+  "places": [
+    "school"
+  ],
+  "concepts": [
+    "jump", "kite", "night", "queen", "up", "van", "xylophone", "yellow"
+  ],
+  "people": [
+    "insect"
+  ]
+} 

@@ -1,0 +1,38 @@
+{
+  "unit1": [
+    "hello", "hi", "good morning", "good afternoon", "goodbye", "bye-bye", "I", "am", "my", "name", "is"
+  ],
+  "unit2": [
+    "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "count", "number"
+  ],
+  "unit3": [
+    "red", "yellow", "blue", "green", "orange", "purple", "black", "white", "brown", "pink", "color"
+  ],
+  "unit4": [
+    "head", "face", "eye", "ear", "nose", "mouth", "arm", "hand", "leg", "foot", "body"
+  ],
+  "unit5": [
+    "pencil", "pen", "book", "ruler", "eraser", "pencil case", "bag", "crayon", "scissors", "sharpener"
+  ],
+  "unit6": [
+    "desk", "chair", "door", "window", "floor", "wall", "board", "picture", "clock", "classroom"
+  ],
+  "unit7": [
+    "cat", "dog", "bird", "fish", "rabbit", "hamster", "turtle", "pet", "animal"
+  ],
+  "unit8": [
+    "mother", "father", "sister", "brother", "baby", "family", "grandma", "grandpa", "parents"
+  ],
+  "unit9": [
+    "apple", "banana", "orange", "pear", "grape", "watermelon", "peach", "fruit"
+  ],
+  "unit10": [
+    "cake", "ice cream", "candy", "chocolate", "cookie", "milk", "water", "juice", "food"
+  ],
+  "unit11": [
+    "ball", "doll", "car", "train", "plane", "kite", "robot", "teddy bear", "toy"
+  ],
+  "unit12": [
+    "happy", "sad", "angry", "scared", "tired", "hungry", "thirsty", "hot", "cold", "feeling"
+  ]
+} 
